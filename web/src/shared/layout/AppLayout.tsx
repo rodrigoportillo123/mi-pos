@@ -26,6 +26,7 @@ export function AppLayout() {
           <nav className="flex gap-2">
             <NavLink to="/" label="Inicio" />
             <NavLink to="/supabase-test" label="Test Supabase" />
+            <NavLink to="/pos" label="POS" />
           </nav>
         </div>
       </header>
