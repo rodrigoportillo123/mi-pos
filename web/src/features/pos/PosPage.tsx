@@ -124,17 +124,26 @@ export function PosPage() {
                 )}
               </div>
 
-              <div className="mt-4 flex gap-2">
-                {st.state === "idle" ? (
-                  <Button onClick={() => handleOpen(t.id)} disabled={busy}>
-                    {busy ? "Abriendo..." : "Abrir cuenta"}
-                  </Button>
-                ) : (
-                  <Button onClick={() => handleClose(st.check.id, t.id)} disabled={busy}>
-                    {busy ? "Cerrando..." : "Cerrar cuenta"}
-                  </Button>
-                )}
-              </div>
+            <div className="mt-4 flex gap-2">
+  {st.state === "idle" ? (
+    <Button onClick={() => handleOpen(t.id)} disabled={busy}>
+      {busy ? "Abriendo..." : "Abrir cuenta"}
+    </Button>
+  ) : (
+    <>
+      {/* BOTÓN NUEVO */}
+      <a href={`/pos/${t.id}`}>
+        <Button variant="ghost">
+          Ver pedido
+        </Button>
+      </a>
+
+      <Button onClick={() => handleClose(st.check.id, t.id)} disabled={busy}>
+        {busy ? "Cerrando..." : "Cerrar cuenta"}
+      </Button>
+    </>
+  )}
+</div>
             </div>
           );
         })}
