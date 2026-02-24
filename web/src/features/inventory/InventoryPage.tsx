@@ -34,9 +34,8 @@ export function InventoryPage() {
   useEffect(() => { void refresh(); }, []);
 
   const lowStock = useMemo(() => {
-    // Umbral simple: stock <= 5 (si quieres por producto, usamos low_stock_threshold en la UI luego)
-    return products.filter(p => Number(p.stock) <= 5 && p.is_active);
-  }, [products]);
+  return products.filter(p => Number(p.stock) <= Number((p as any).low_stock_threshold ?? 5) && p.is_active);
+}, [products]);
 
   const productMap = useMemo(() => {
     const m = new Map<string, ProductRow>();

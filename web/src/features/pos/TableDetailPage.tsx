@@ -140,7 +140,16 @@ export function TableDetailPage() {
 
       await refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error dictando");
+      const msg = e instanceof Error ? e.message : "Error dictando";
+
+      // mensajes comunes del navegador
+      if (String(msg).includes("not-allowed")) {
+        setError("Permiso denegado: habilita el micrófono para este sitio y vuelve a intentar.");
+      } else if (String(msg).includes("no-speech")) {
+        setError("No se detectó voz. Habla más cerca del micrófono y vuelve a intentar.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setDictating(false);
     }

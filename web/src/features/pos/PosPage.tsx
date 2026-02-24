@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "../../shared/ui/Button";
 import type { CheckRow, TableRow } from "./types";
 import { closeCheck, fetchOpenChecks, fetchTables, openCheck } from "./posApi";
-
+import { supabase } from "../../lib/supabaseClient";
 type TableCardState =
   | { state: "idle" }
   | { state: "open"; check: CheckRow };
@@ -60,18 +60,37 @@ export function PosPage() {
     }
   }
 
-  async function handleClose(checkId: string, tableId: number) {
-    setBusyTableId(tableId);
-    setError("");
-    try {
-      await closeCheck(checkId);
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error desconocido");
-    } finally {
-      setBusyTableId(null);
+  async function getCheckItemsCount(checkId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("check_items")
+    .select("*", { count: "exact", head: true })
+    .eq("check_id", checkId);
+
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+ async function handleClose(checkId: string, tableId: number) {
+  setBusyTableId(tableId);
+  setError("");
+  try {
+    const itemCount = await getCheckItemsCount(checkId);
+
+    if (itemCount === 0) {
+      setError(`No puedes cerrar la Mesa ${tableId} sin items en el pedido.`);
+      return;
     }
+
+    const ok = window.confirm(`¿Cerrar cuenta de Mesa ${tableId}? Se descontará inventario y se registrará la venta.`);
+    if (!ok) return;
+
+    await closeCheck(checkId);
+    await refresh();
+  } catch (e) {
+    setError(e instanceof Error ? e.message : "Error desconocido");
+  } finally {
+    setBusyTableId(null);
   }
+}
 
   return (
     <div className="space-y-4">

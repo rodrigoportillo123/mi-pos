@@ -14,7 +14,7 @@ export type InventoryMovementRow = {
 export async function fetchProductsForInventory(): Promise<ProductRow[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("id,name,price,cost,stock,unit,is_active")
+    .select("id,name,price,cost,stock,unit,is_active,low_stock_threshold")
     .order("name", { ascending: true });
 
   if (error) throw new Error(error.message);
