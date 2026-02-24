@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "../../shared/ui/Button";
 import type { CheckRow, TableRow } from "./types";
 import { closeCheck, fetchOpenChecks, fetchTables, openCheck } from "./posApi";
@@ -124,26 +125,25 @@ export function PosPage() {
                 )}
               </div>
 
-            <div className="mt-4 flex gap-2">
-  {st.state === "idle" ? (
-    <Button onClick={() => handleOpen(t.id)} disabled={busy}>
-      {busy ? "Abriendo..." : "Abrir cuenta"}
-    </Button>
-  ) : (
-    <>
-      {/* BOTÓN NUEVO */}
-      <a href={`/pos/${t.id}`}>
-        <Button variant="ghost">
-          Ver pedido
-        </Button>
-      </a>
+              <div className="mt-4 flex gap-2">
+                {st.state === "idle" ? (
+                  <Button onClick={() => handleOpen(t.id)} disabled={busy}>
+                    {busy ? "Abriendo..." : "Abrir cuenta"}
+                  </Button>
+                ) : (
+                  <>
+                    <Link to={`/pos/${t.id}`}>
+                      <Button variant="ghost">
+                        Ver pedido
+                      </Button>
+                    </Link>
 
-      <Button onClick={() => handleClose(st.check.id, t.id)} disabled={busy}>
-        {busy ? "Cerrando..." : "Cerrar cuenta"}
-      </Button>
-    </>
-  )}
-</div>
+                    <Button onClick={() => handleClose(st.check.id, t.id)} disabled={busy}>
+                      {busy ? "Cerrando..." : "Cerrar cuenta"}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           );
         })}

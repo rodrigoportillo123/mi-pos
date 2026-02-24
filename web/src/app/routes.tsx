@@ -14,7 +14,7 @@ export const router = createBrowserRouter([
       { path: "/supabase-test", element: <SupabaseTestPage /> },
       { path: "/pos", element: <PosPage /> },
       { path: "/products", element: <ProductsPage /> },
-{ path: "/pos/:tableId", element: <TableDetailPage /> },
+      { path: "/pos/:tableId", element: <TableDetailPage /> },
     ],
   },
 ]);

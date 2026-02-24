@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "../../shared/ui/Button";
 import { fetchOpenChecks } from "./posApi";
 import { addCheckItem, deleteCheckItem, fetchCheckItems, type CheckItemRow } from "./checkItemsApi";
 import { fetchProducts } from "../products/productsApi";
 import type { ProductRow } from "../products/types";
+
+import { startDictation } from "../voice/speech";
+import { parseVoiceOrder, type ParsedItem } from "../voice/parseorder";
 
 export function TableDetailPage() {
   const { tableId } = useParams();
@@ -20,14 +23,19 @@ export function TableDetailPage() {
   const [qty, setQty] = useState("1");
   const [note, setNote] = useState("");
 
-  async function refresh() {
+  // Voz
+  const [lastTranscript, setLastTranscript] = useState<string>("");
+  const [pendingItems, setPendingItems] = useState<ParsedItem[] | null>(null);
+  const [dictating, setDictating] = useState(false);
+
+  const refresh = useCallback(async () => {
     setError("");
     setLoading(true);
     try {
       const [prods, opens] = await Promise.all([fetchProducts(), fetchOpenChecks()]);
-      setProducts(prods.filter(p => p.is_active));
+      setProducts(prods.filter((p) => p.is_active));
 
-      const open = opens.find(c => c.table_id === tid);
+      const open = opens.find((c) => c.table_id === tid);
       if (!open) {
         setCheckId(null);
         setItems([]);
@@ -41,9 +49,11 @@ export function TableDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [tid]);
 
-  useEffect(() => { void refresh(); }, [tid]);
+  useEffect(() => {
+    void refresh();
+  }, [tid, refresh]);
 
   const productMap = useMemo(() => {
     const m = new Map<string, ProductRow>();
@@ -57,7 +67,7 @@ export function TableDetailPage() {
     return s;
   }, [items]);
 
-  const taxRate = 0; // por ahora 0; si quieres IVA luego lo activamos
+  const taxRate = 0;
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
@@ -94,6 +104,104 @@ export function TableDetailPage() {
     }
   }
 
+  async function onDictate() {
+    if (!checkId) return;
+    setError("");
+    setDictating(true);
+
+    try {
+      const { transcript } = await startDictation({ lang: "es-SV" });
+      setLastTranscript(transcript);
+
+      const parsed = parseVoiceOrder(transcript, products);
+
+      if (parsed.items.length === 0) {
+        setError(parsed.message || "No se detectaron items.");
+        return;
+      }
+
+      // si hay dudas, pedimos confirmación con modal
+      if (parsed.needsConfirmation) {
+        setPendingItems(parsed.items);
+        return;
+      }
+
+      // si es claro, insertamos directo
+      for (const it of parsed.items) {
+        await addCheckItem({
+          checkId,
+          productId: it.product.id,
+          productName: it.product.name,
+          unitPrice: Number(it.product.price),
+          qty: it.qty,
+          note: it.note,
+        });
+      }
+
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error dictando");
+    } finally {
+      setDictating(false);
+    }
+  }
+
+  function ConfirmModal() {
+    if (!pendingItems || !checkId) return null;
+
+    async function confirmAll() {
+      setError("");
+      try {
+        if (!pendingItems || !checkId) return;
+        for (const it of pendingItems) {
+          await addCheckItem({
+            checkId,
+            productId: it.product.id,
+            productName: it.product.name,
+            unitPrice: Number(it.product.price),
+            qty: it.qty,
+            note: it.note,
+          });
+        }
+        setPendingItems(null);
+        await refresh();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Error confirmando");
+      }
+    }
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="w-full max-w-lg rounded-2xl bg-white p-4 shadow-xl space-y-3">
+          <div className="text-lg font-semibold">Confirmar pedido</div>
+
+          <div className="text-sm text-black/70">
+            Transcripción: <span className="font-medium">"{lastTranscript}"</span>
+          </div>
+
+          <div className="rounded-xl border p-3 space-y-2">
+            {pendingItems.map((it, idx) => (
+              <div key={idx} className="text-sm">
+                <div className="font-medium">
+                  {it.qty} × {it.product.name}
+                </div>
+                {it.note && <div className="text-xs text-black/60">Nota: {it.note}</div>}
+                {it.reason && <div className="text-xs text-amber-700">⚠ {it.reason}</div>}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setPendingItems(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmAll}>Confirmar y agregar</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
@@ -127,7 +235,12 @@ export function TableDetailPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {/* Agregar item */}
           <div className="rounded-2xl border p-4 space-y-3">
-            <div className="font-semibold">Agregar al pedido</div>
+            <div className="flex items-center justify-between">
+              <div className="font-semibold">Agregar al pedido</div>
+              <Button variant="ghost" onClick={onDictate} disabled={!checkId || dictating}>
+                {dictating ? "🎙️ Escuchando..." : "🎙️ Dictar pedido"}
+              </Button>
+            </div>
 
             <select
               className="w-full rounded-xl border px-3 py-2"
@@ -135,7 +248,7 @@ export function TableDetailPage() {
               onChange={(e) => setSelectedProductId(e.target.value)}
             >
               <option value="">Selecciona un producto...</option>
-              {products.map(p => (
+              {products.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} — ${Number(p.price).toFixed(2)}
                 </option>
@@ -143,8 +256,18 @@ export function TableDetailPage() {
             </select>
 
             <div className="grid grid-cols-2 gap-2">
-              <input className="rounded-xl border px-3 py-2" value={qty} onChange={(e)=>setQty(e.target.value)} placeholder="Cantidad" />
-              <input className="rounded-xl border px-3 py-2" value={note} onChange={(e)=>setNote(e.target.value)} placeholder="Nota (opcional)" />
+              <input
+                className="rounded-xl border px-3 py-2"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                placeholder="Cantidad"
+              />
+              <input
+                className="rounded-xl border px-3 py-2"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Nota (opcional)"
+              />
             </div>
 
             <Button onClick={onAdd} disabled={!selectedProductId || Number(qty) <= 0}>
@@ -160,14 +283,16 @@ export function TableDetailPage() {
               {items.length === 0 ? (
                 <div className="text-sm text-black/60">Sin items todavía</div>
               ) : (
-                items.map(it => (
+                items.map((it) => (
                   <div key={it.id} className="flex items-start justify-between gap-3 border-b pb-2">
                     <div>
                       <div className="text-sm font-medium">
                         {it.qty} × {it.product_name}
                       </div>
                       {it.note && <div className="text-xs text-black/60">Nota: {it.note}</div>}
-                      <div className="text-xs text-black/60">${Number(it.unit_price).toFixed(2)} c/u</div>
+                      <div className="text-xs text-black/60">
+                        ${Number(it.unit_price).toFixed(2)} c/u
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium">
@@ -190,6 +315,9 @@ export function TableDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de confirmación */}
+      <ConfirmModal />
     </div>
   );
 }
