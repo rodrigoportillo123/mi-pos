@@ -6,6 +6,7 @@ import { PosPage } from "../features/pos/PosPage";
 import { ProductsPage } from "../features/products/ProductsPage";
 import { TableDetailPage } from "../features/pos/TableDetailPage";
 import { InventoryPage } from "../features/inventory/InventoryPage";
+import { DashboardPage } from "../features/dashboard/DashboardPage";
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
       { path: "/products", element: <ProductsPage /> },
       { path: "/pos/:tableId", element: <TableDetailPage /> },
       { path: "/inventory", element: <InventoryPage /> },
+      { path: "/dashboard", element: <DashboardPage /> },
     ],
   },
 ]);

@@ -29,6 +29,7 @@ export function AppLayout() {
             <NavLink to="/pos" label="POS" />
             <NavLink to="/products" label="Productos" />
             <NavLink to="/inventory" label="Inventario" />
+            <NavLink to="/dashboard" label="Dashboard" />
           </nav>
         </div>
       </header>
