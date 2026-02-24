@@ -28,6 +28,7 @@ export function AppLayout() {
             <NavLink to="/supabase-test" label="Test Supabase" />
             <NavLink to="/pos" label="POS" />
             <NavLink to="/products" label="Productos" />
+            <NavLink to="/inventory" label="Inventario" />
           </nav>
         </div>
       </header>

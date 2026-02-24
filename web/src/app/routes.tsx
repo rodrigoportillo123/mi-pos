@@ -5,6 +5,7 @@ import { SupabaseTestPage } from "../features/supabase-test/SupabaseTestPage";
 import { PosPage } from "../features/pos/PosPage";
 import { ProductsPage } from "../features/products/ProductsPage";
 import { TableDetailPage } from "../features/pos/TableDetailPage";
+import { InventoryPage } from "../features/inventory/InventoryPage";
 
 export const router = createBrowserRouter([
   {
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
       { path: "/pos", element: <PosPage /> },
       { path: "/products", element: <ProductsPage /> },
       { path: "/pos/:tableId", element: <TableDetailPage /> },
+      { path: "/inventory", element: <InventoryPage /> },
     ],
   },
 ]);

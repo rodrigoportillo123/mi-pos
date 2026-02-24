@@ -34,10 +34,9 @@ export async function openCheck(tableId: number): Promise<CheckRow> {
 }
 
 export async function closeCheck(checkId: string): Promise<void> {
-  const { error } = await supabase
-    .from("checks")
-    .update({ status: "closed", closed_at: new Date().toISOString() })
-    .eq("id", checkId);
+  const { error } = await supabase.rpc("close_check_and_post", {
+    p_check_id: checkId,
+  });
 
   if (error) throw new Error(error.message);
 }
