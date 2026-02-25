@@ -26,4 +26,12 @@ dist-ssr
 node_modules
 dist
 .env
-.vite
+.env.local
+.env.production
+
+node_modules
+web/node_modules
+web/dist
+dist
+.env
+.env.*

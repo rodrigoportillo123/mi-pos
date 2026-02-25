@@ -25,7 +25,6 @@ export function AppLayout() {
           <div className="font-semibold">POS Restaurante</div>
           <nav className="flex gap-2">
             <NavLink to="/" label="Inicio" />
-            <NavLink to="/supabase-test" label="Test Supabase" />
             <NavLink to="/pos" label="POS" />
             <NavLink to="/products" label="Productos" />
             <NavLink to="/inventory" label="Inventario" />

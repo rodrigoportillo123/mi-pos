@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../shared/ui/Button";
-import { createProduct, fetchProducts, updateProduct } from "./productsApi";
+import { createProduct, fetchProducts, updateProduct, addSalvadoranFood } from "./productsApi";
 import type { ProductRow } from "./types";
 
 export function ProductsPage() {
@@ -55,6 +55,19 @@ export function ProductsPage() {
     }
   }
 
+  async function onAddSalvadoranFood() {
+    setError("");
+    setLoading(true);
+    try {
+      await addSalvadoranFood();
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error agregando comida típica");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
@@ -82,9 +95,17 @@ export function ProductsPage() {
           <input className="rounded-xl border px-3 py-2" placeholder="Stock" value={stock} onChange={(e)=>setStock(e.target.value)} />
           <input className="rounded-xl border px-3 py-2" placeholder="Unidad" value={unit} onChange={(e)=>setUnit(e.target.value)} />
         </div>
-        <div className="mt-3">
+        <div className="mt-3 flex gap-2">
           <Button onClick={onCreate} disabled={!name.trim()}>
             Crear
+          </Button>
+          <Button 
+            variant="ghost" 
+            onClick={onAddSalvadoranFood} 
+            disabled={loading}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            {loading ? "Agregando..." : "🇸🇻 Agregar Comida Típica SV"}
           </Button>
         </div>
       </div>
